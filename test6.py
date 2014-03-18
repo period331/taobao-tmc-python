@@ -6,7 +6,6 @@ sys.path.insert(0, '/Users/baocaixiong/PythonProjects/python-websocket')
 
 import time
 import struct
-import bitstring
 from websocket import WebSocket
 
 from binascii import *

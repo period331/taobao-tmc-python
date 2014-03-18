@@ -3,7 +3,6 @@
 import sys
 import time
 import struct
-import bitstring
 import threading
 
 from binascii import *
@@ -22,12 +21,12 @@ from message import MessageIO, Message
 
 messageIo = MessageIO()
 
-conn = create_connection('ws://mc.api.taobao.com/')
+conn = create_connection('ws://mc.api.tbsandbox.com/')
 # conn = create_connection('ws://127.0.0.1:10000')
 
-app_key = ''
+app_key = '1021737885'
 group_name = 'default'
-secret = ''
+secret = 'sandboxbbf5579605d7936422c11af0e'
 timestamp = int(round(time.time() * 1000))
 
 
@@ -44,7 +43,7 @@ request = {
 message = Message(2, 0, flag=1, content=request)
 stream = messageIo.writeMessage(message)
 
-_queryMessage = Message(2, 2, content={'__kind': str(1)})
+_queryMessage = Message(2, 2, content={'__kind': 1})
 
 confirmMessage = Message(2, 2, content={"__kind": str(2)})
 

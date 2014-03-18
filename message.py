@@ -4,7 +4,7 @@ from messagetype import MessageType
 from struct import calcsize, unpack_from, pack
 from binascii import *
 from datetime import datetime
-from json import dumps
+import types
 
 
 class MessageIO(object):
@@ -51,9 +51,21 @@ class MessageIO(object):
         if not value:
             stream.byte(MessageType.ValueFormat.void)
 
-        stream.byte(MessageType.ValueFormat.countedString)
-
-        stream.string(value)
+        if isinstance(value, types.IntType) and value < ((1 << 8) - 1):
+            stream.byte(MessageType.ValueFormat.byte)
+            stream.byte(value)
+        elif isinstance(value, types.IntType) and value < ((1 << 16) - 1):
+            stream.byte(MessageType.ValueFormat.int16)
+            stream.int16(value)
+        elif isinstance(value, types.IntType) and value < ((1 << 32) - 1):
+            stream.byte(MessageType.ValueFormat.int32)
+            stream.int32(value)
+        elif isinstance(value, types.IntType) and value < ((1 << 64) - 1):
+            stream.byte(MessageType.ValueFormat.int64)
+            stream.int64(value)
+        else:
+            stream.byte(MessageType.ValueFormat.countedString)
+            stream.string(value)
 
     def readMessage(self, bmessage):
         """ 读取消息数据 """
@@ -131,6 +143,8 @@ class MessageIO(object):
             return unpack_from('<%dB' % _l, bmessage, offset + calcsize('<I'))[0], offset + calcsize('<I%dB' % _l)
         else:
             return self.readCountedString(bmessage, offset);
+
+messageIO = MessageIO()
 
 
 class Message(object):
