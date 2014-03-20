@@ -16,12 +16,9 @@ from message import MessageIO, Message
 
 messageIo = MessageIO()
 
-conn = WebSocket('ws://mc.api.taobao.com/')
-# conn = create_connection('ws://127.0.0.1:10000')
-
-app_key = ''
+app_key = '1021737885'
 group_name = 'default'
-secret = ''
+secret = 'sandboxbbf5579605d7936422c11af0e'
 timestamp = int(round(time.time() * 1000))
 
 
@@ -44,7 +41,7 @@ def my_msg_handler(msg):
 message = Message(2, 0, flag=1, content=request)
 stream = messageIo.writeMessage(message)
 
-socket = WebSocket('ws://mc.api.taobao.com/', onmessage=my_msg_handler)
+socket = WebSocket('ws://mc.api.tbsandbox.com/', onmessage=my_msg_handler)
 socket.onopen = lambda: socket.send(stream)
 
 try:

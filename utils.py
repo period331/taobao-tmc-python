@@ -22,8 +22,6 @@ def createSign(app_key, group_name, secret, timestamp=None):
 
     param_str += secret
 
-    print param_str
-
     return md5(param_str).hexdigest().upper()
 
 

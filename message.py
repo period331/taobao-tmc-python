@@ -137,7 +137,7 @@ class MessageIO(object):
             return unpack_from('<Q', bmessage, offset)[0], offset + calcsize('<Q')
         elif _type == ValueFormat.date:
             ticks = unpack_from('<Q', bmessage, offset)[0]
-            return datetime.fromtimestamp(float(ticks) / 1000), offset + calcsize('<Q')
+            return datetime.fromtimestamp(float(ticks) / 1000).strftime('%Y-%m-%d %H:%M:%S'), offset + calcsize('<Q')
         elif _type == ValueFormat.byteArray:
             _l = unpack_from('<I', bmessage, offset)[0]
             return unpack_from('<%dB' % _l, bmessage, offset + calcsize('<I'))[0], offset + calcsize('<I%dB' % _l)
@@ -162,6 +162,39 @@ class Message(object):
 
     def update_offset(self, offset):
         self.offset = self.offset + offset
+
+    def update_content(self, _dict):
+        if isinstance(_dict, dict):
+            self.content.update(_dict)
+
+    def __str__(self):
+        return '{"' + """content: "{content}", \
+messageType: "{messageType}", \
+statusCode: "{statusCode}", \
+statusPhrase: "{statusPhrase}", \
+flag: "{flag}", \
+token: "{token}", \
+protocolVersion: "{protocolVersion}""".format(**self.__dict__) + '"}'
+
+    __repr__ = __str__
+
+
+class ConfirmMessage(Message):
+    def __init__(self, *args, **kwargs):
+        super(ConfirmMessage, self).__init__(*args, **kwargs)
+
+        self.messageType = 2
+
+        self.content = {'__kind': 2}
+
+
+class QueryMessage(Message):
+    def __init__(self, *args, **kwargs):
+        super(QueryMessage, self).__init__(*args, **kwargs)
+
+        self.messageType = 2
+
+        self.content = {'__kind': 1}
 
 
 class WriteBuffer(bytearray):
