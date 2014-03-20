@@ -1,16 +1,11 @@
 # coding: utf-8
 
 import sys
-import time
-import struct
-import threading
 from binascii import *
-
-from utils import createSign
 
 sys.path.insert(0, '/Users/baocaixiong/ProgramFiles/websocket-client')
 
-from websocket import create_connection, enableTrace, WebSocket
+from websocket import WebSocket
 
 
 class TaobaoWebSocket(WebSocket):
@@ -18,7 +13,7 @@ class TaobaoWebSocket(WebSocket):
         super(TaobaoWebSocket, self).__init__(*args, **kwargs)
 
 
-from message import messageIO
+from taobaowspy.message import messageIO
 
 s = '020205002400000035363630303062392d626538382d343465612d383431632d6132613865333565373964300100060000005f5f6b696e640101000000310000'
 

@@ -2,10 +2,10 @@
 
 import sys
 import time
-import struct
-import bitstring
 
-from utils import createSign
+import bitstring
+from taobaowspy.utils import gen_sign
+
 
 sys.path.insert(0, '/Users/baocaixiong/ProgramFiles/websocket-client')
 
@@ -14,6 +14,7 @@ from websocket import create_connection, enableTrace
 enableTrace(True)
 
 import struct
+
 
 class DataStream(bytearray):
 
@@ -34,12 +35,12 @@ secret = 'sandboxbbf5579605d7936422c11af0e'
 timestamp = int(round(time.time() * 1000))
 
 request = {
-    'app_key' : app_key,
-    'group_name' : group_name,
-    'timestamp' : timestamp
+    'app_key': app_key,
+    'group_name': group_name,
+    'timestamp': timestamp
 }
 
-sign = createSign(app_key, group_name, secret, timestamp)
+sign = gen_sign(app_key, group_name, secret, timestamp)
 
 # stream = DataStream();
 # stream.append(2)
@@ -81,6 +82,6 @@ print conn.send_binary(stream)
 # # conn.send(chr(0x02) + chr(0x00) + chr(0x0004)+chr(0x00000001)+chr(0x0000))
 # print "Sent"
 # print "Reeiving..."
-result =  conn.recv()
+result = conn.recv()
 print "Received '%s'" % result
 conn.close()

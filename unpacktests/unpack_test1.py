@@ -4,7 +4,6 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-import time
 import struct
 from binascii import *
 
@@ -47,7 +46,7 @@ print struct.unpack_from('<6s', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sbqHi')
 print struct.unpack_from('<B', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sbqHi6s')), '19'
 print struct.unpack_from('<B', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sbqHi6sB')), '20'
 
-from message import MessageIO
+from taobaowspy.message import MessageIO
 
 io = MessageIO()
 message = io.read(bs)

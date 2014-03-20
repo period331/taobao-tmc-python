@@ -1,10 +1,10 @@
 # coding: utf-8
 
-from messagetype import MessageType
 from struct import calcsize, unpack_from, pack
-from binascii import *
 from datetime import datetime
 import types
+
+from taobaowspy.messagetype import MessageType
 
 
 class MessageIO(object):

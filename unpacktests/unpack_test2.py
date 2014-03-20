@@ -1,7 +1,5 @@
 # coding: utf-8
 
-import sys
-import time
 import struct
 from binascii import *
 b = '020104000100000005002400000033346563376666632d666235362d343432612d626433392d6535356237333030356536640000'
@@ -25,7 +23,7 @@ print len(querenlianjie)
 print struct.unpack('<2Bhihi36sh', bs)
 print len(''.join([str(i) for i in struct.unpack('<2Bhihi36sh', bs)]))
 
-from message import MessageIO
+from taobaowspy.message import MessageIO
 
 io = MessageIO()
 message = io.read(bs)

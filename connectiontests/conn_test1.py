@@ -2,22 +2,19 @@
 
 import sys
 import time
-import struct
 import threading
-
 from binascii import *
 
-from utils import createSign
+from taobaowspy.utils import gen_sign
+
 
 sys.path.insert(0, '/Users/baocaixiong/ProgramFiles/websocket-client')
 
-from websocket import create_connection, enableTrace
+from websocket import create_connection
 
 # enableTrace(True)
 
-import struct
-
-from message import MessageIO, Message
+from taobaowspy.message import MessageIO, Message
 
 messageIo = MessageIO()
 
@@ -33,7 +30,7 @@ request = {
     'timestamp': str(timestamp),
     'app_key': app_key,
     'sdk': 'top-sdk-java-201403304',
-    'sign': createSign(app_key, group_name, secret, timestamp),
+    'sign': gen_sign(app_key, group_name, secret, timestamp),
     'group_name': group_name,
 }
 
@@ -46,6 +43,7 @@ confirmMessage = Message(2, 2, content={"__kind": str(2)})
 
 # print b2a_hex(stream)
 # print stream
+
 
 def _send_ping(token):
     while 1:
@@ -80,7 +78,6 @@ while 1:
 
     print message.token, message.messageType, message.statusCode, message.statusPhrase, 'gahahahah'
     print message.content
-
 
     time.sleep(0.5)
 
