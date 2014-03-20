@@ -29,19 +29,16 @@ group_name = 'default'
 secret = 'sandboxbbf5579605d7936422c11af0e'
 timestamp = int(round(time.time() * 1000))
 
-
-
 request = {
-    'timestamp' : str(timestamp),
-    'app_key' : app_key,
-    # 'sign': '869FA08A2D474FCDCF04D20F895DCB58',
+    'timestamp': str(timestamp),
+    'app_key': app_key,
     'sdk': 'top-sdk-java-201403304',
     'sign': createSign(app_key, group_name, secret, timestamp),
-    'group_name' : group_name,
+    'group_name': group_name,
 }
 
 message = Message(2, 0, flag=1, content=request)
-stream = messageIo.writeMessage(message)
+stream = messageIo.write(message)
 
 _queryMessage = Message(2, 2, content={'__kind': 1})
 
@@ -53,7 +50,7 @@ confirmMessage = Message(2, 2, content={"__kind": str(2)})
 def _send_ping(token):
     while 1:
         _queryMessage.token = token
-        m = messageIo.writeMessage(_queryMessage)
+        m = messageIo.write(_queryMessage)
 
         print m, '=============string'
 
@@ -72,7 +69,7 @@ while 1:
 
     print b2a_hex(result)
 
-    message = messageIo.readMessage(result)
+    message = messageIo.read(result)
 
     if not _queryMessageThread:
         thread = threading.Thread(target=_send_ping, args=(message.token,))

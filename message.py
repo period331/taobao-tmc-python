@@ -11,7 +11,7 @@ class MessageIO(object):
     def __init__(self):
         pass
 
-    def writeMessage(self, message):
+    def write(self, message):
 
         stream = WriteBuffer()
 
@@ -36,18 +36,19 @@ class MessageIO(object):
 
         if len(message.content) > 0:
             for key, value in message.content.items():
-                self.writeCustomHeader(stream, key, value)
+                self.write_custom_header(stream, key, value)
 
         stream.int16(MessageType.HeaderType.endOfHeaders)
 
         return stream
 
-    def writeCustomHeader(self, stream, key, value):
+    def write_custom_header(self, stream, key, value):
         stream.int16(MessageType.HeaderType.custom)
         stream.string(key)
-        self.writeCustomValue(stream, value)
+        self.write_custom_value(stream, value)
 
-    def writeCustomValue(self, stream, value):
+    @staticmethod
+    def write_custom_value(stream, value):
         if not value:
             stream.byte(MessageType.ValueFormat.void)
 
@@ -67,93 +68,95 @@ class MessageIO(object):
             stream.byte(MessageType.ValueFormat.countedString)
             stream.string(value)
 
-    def readMessage(self, bmessage):
+    def read(self, stream):
         """ 读取消息数据 """
 
         def unpack_from_wrap(fmt, offset):
-            return unpack_from('<' + fmt, bmessage, offset)
+            return unpack_from('<' + fmt, stream, offset)
 
-        message = Message(protocolVersion=unpack_from_wrap('B', 0)[0],
-            messageType=unpack_from_wrap('B', calcsize('<B'))[0])
+        message = Message(protocol_version=unpack_from_wrap('B', 0)[0],
+                          message_type=unpack_from_wrap('B', calcsize('<B'))[0])
 
-        headerType = unpack_from_wrap('H', calcsize('<2B'))[0]
+        header_type = unpack_from_wrap('H', calcsize('<2B'))[0]
 
         message.update_offset(calcsize('<2BH'))
 
-        HeaderType = MessageType.HeaderType
+        _header_type = MessageType.HeaderType
 
-        while headerType != HeaderType.endOfHeaders:
-            if headerType ==  HeaderType.custom:
-                key, message.offset = self.readCountedString(bmessage, message.offset)
+        while header_type != _header_type.endOfHeaders:
+            if header_type == _header_type.custom:
+                key, message.offset = self.read_counted_str(stream, message.offset)
 
-                value, message.offset = self.readCustomValue(bmessage, message.offset)
+                value, message.offset = self.read_custom_value(stream, message.offset)
 
                 message.content[key] = value
-            elif headerType == HeaderType.statusCode:
-                message.statusCode = unpack_from_wrap('I', message.offset)[0]
+            elif header_type == _header_type.statusCode:
+                message.status_code = unpack_from_wrap('I', message.offset)[0]
                 message.update_offset(calcsize('<I'))
-            elif headerType == HeaderType.statusPhrase:
-                message.statusCode, message.offset = self.readCountedString(bmessage, message.offset)
-            elif headerType == HeaderType.flag:
+            elif header_type == _header_type.statusPhrase:
+                message.status_code, message.offset = self.read_counted_str(stream, message.offset)
+            elif header_type == _header_type.flag:
                 message.flag = unpack_from_wrap('I', message.offset)[0]
                 message.update_offset(calcsize('<I'))
-            elif headerType == HeaderType.token:
-                message.token, message.offset = self.readCountedString(bmessage, message.offset)
+            elif header_type == _header_type.token:
+                message.token, message.offset = self.read_counted_str(stream, message.offset)
 
-            headerType = unpack_from_wrap('H', message.offset)[0]
+            header_type = unpack_from_wrap('H', message.offset)[0]
             message.update_offset(calcsize('<H'))
 
         return message
 
-    def readCountedString(self, bmessage, offset):
+    @staticmethod
+    def read_counted_str(stream, offset):
         """ 读取字符串 """
-        length = unpack_from('<B', bmessage, offset)[0]
+        length = unpack_from('<B', stream, offset)[0]
 
         if length > 0:
 
-            s = unpack_from('<%ds' % length, bmessage, offset + calcsize('<I'))[0]
+            s = unpack_from('<%ds' % length, stream, offset + calcsize('<I'))[0]
 
             return s.decode('utf-8'), offset + calcsize('<I%ds' % length)
         else:
             return None, offset + calcsize('<I')
 
-    def readCustomValue(self, bmessage, offset):
+    def read_custom_value(self, stream, offset):
         """ 读取用户数据value """
-        _type = unpack_from('<B', bmessage, offset)[0]
+        _type = unpack_from('<B', stream, offset)[0]
 
-        ValueFormat = MessageType.ValueFormat
+        _value_fmt = MessageType.ValueFormat
 
         offset += calcsize('<B')
 
-        if _type == ValueFormat.void:
+        if _type == _value_fmt.void:
             return None, offset
-        elif _type == ValueFormat.byte:
-            return unpack_from('<B', bmessage, offset)[0], offset + calcsize('<B')
-        elif _type == ValueFormat.int16:
-            return unpack_from('<H', bmessage, offset)[0], offset + calcsize('<H')
-        elif _type == ValueFormat.int32:
-            return unpack_from('<I', bmessage, offset)[0], offset + calcsize('<I')
-        elif _type == ValueFormat.int64:
-            return unpack_from('<Q', bmessage, offset)[0], offset + calcsize('<Q')
-        elif _type == ValueFormat.date:
-            ticks = unpack_from('<Q', bmessage, offset)[0]
+        elif _type == _value_fmt.byte:
+            return unpack_from('<B', stream, offset)[0], offset + calcsize('<B')
+        elif _type == _value_fmt.int16:
+            return unpack_from('<H', stream, offset)[0], offset + calcsize('<H')
+        elif _type == _value_fmt.int32:
+            return unpack_from('<I', stream, offset)[0], offset + calcsize('<I')
+        elif _type == _value_fmt.int64:
+            return unpack_from('<Q', stream, offset)[0], offset + calcsize('<Q')
+        elif _type == _value_fmt.date:
+            ticks = unpack_from('<Q', stream, offset)[0]
             return datetime.fromtimestamp(float(ticks) / 1000).strftime('%Y-%m-%d %H:%M:%S'), offset + calcsize('<Q')
-        elif _type == ValueFormat.byteArray:
-            _l = unpack_from('<I', bmessage, offset)[0]
-            return unpack_from('<%dB' % _l, bmessage, offset + calcsize('<I'))[0], offset + calcsize('<I%dB' % _l)
+        elif _type == _value_fmt.byteArray:
+            _l = unpack_from('<I', stream, offset)[0]
+            return unpack_from('<%dB' % _l, stream, offset + calcsize('<I'))[0], offset + calcsize('<I%dB' % _l)
         else:
-            return self.readCountedString(bmessage, offset);
+            return self.read_counted_str(stream, offset)
+
 
 messageIO = MessageIO()
 
 
 class Message(object):
-    def __init__(self, protocolVersion=2, messageType=None, statusCode=None,
-                statusPhrase=None, flag=None, token=None, content={}):
-        self.protocolVersion = protocolVersion
-        self.messageType = messageType
-        self.statusCode = statusCode
-        self.statusPhrase = statusPhrase
+    def __init__(self, protocol_version=2, message_type=None, status_code=None,
+                 status_phrase=None, flag=None, token=None, content={}):
+        self.protocol_version = protocol_version
+        self.message_type = message_type
+        self.status_code = status_code
+        self.status_phrase = status_phrase
         self.flag = flag
         self.token = token
         self.content = content if content is not None else {}
@@ -183,7 +186,7 @@ class ConfirmMessage(Message):
     def __init__(self, *args, **kwargs):
         super(ConfirmMessage, self).__init__(*args, **kwargs)
 
-        self.messageType = 2
+        self.message_type = 2
 
         self.content = {'__kind': 2}
 
@@ -192,13 +195,12 @@ class QueryMessage(Message):
     def __init__(self, *args, **kwargs):
         super(QueryMessage, self).__init__(*args, **kwargs)
 
-        self.messageType = 2
+        self.message_type = 2
 
         self.content = {'__kind': 1}
 
 
 class WriteBuffer(bytearray):
-
     def byte(self, v):
         self.extend(pack('<B', v))
 

@@ -22,9 +22,6 @@ message = '020205002400000064326333653836342d636636642d343838382d386662332d35626
 bs = unhexlify(message)
 
 
-# print struct.unpack_from('<21s', unhexlify('74616f62616f5f74726164655f54726164654275796572506179'))
-
-
 print struct.unpack_from('<B', bs), 0, '1'
 print struct.unpack_from('<B', bs, struct.calcsize('<B')), struct.calcsize('<B'), '2'
 print struct.unpack_from('<h', bs, struct.calcsize('<2B')), struct.calcsize('<2B'), '3'
@@ -53,15 +50,6 @@ print struct.unpack_from('<B', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sbqHi6sB
 from message import MessageIO
 
 io = MessageIO()
-message = io.readMessage(bs)
+message = io.read(bs)
 
 print message.content
-print message.content['nick']
-
-
-# print b2a_hex(bs[struct.calcsize('<2Bhi36shi5sbi26shi6sb'):])
-# print b2a_hex(bs[struct.calcsize('<2Bhi36shi5sbi26shi6sbq'):])
-
-
-def readMessage():
-    pass
