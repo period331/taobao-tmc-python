@@ -152,14 +152,14 @@ messageIO = MessageIO()
 
 class Message(object):
     def __init__(self, protocol_version=2, message_type=None, status_code=None,
-                 status_phrase=None, flag=None, token=None, content={}):
+                 status_phrase=None, flag=None, token=None, content=None):
         self.protocol_version = protocol_version
         self.message_type = message_type
         self.status_code = status_code
         self.status_phrase = status_phrase
         self.flag = flag
         self.token = token
-        self.content = content if content is not None else {}
+        self.content = content if content is not None and isinstance(content, dict) else {}
 
         self.offset = 0
 

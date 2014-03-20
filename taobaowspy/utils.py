@@ -26,3 +26,9 @@ def gen_sign(app_key, group_name, secret, timestamp=None):
     return md5(param_str).hexdigest().upper()
 
 
+class Shop(object):
+    def __init__(self, **kwargs):
+        self.name = kwargs.pop('name', '')
+        self.session = kwargs.pop('session', '')
+
+
