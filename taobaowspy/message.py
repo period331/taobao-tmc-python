@@ -171,13 +171,13 @@ class Message(object):
             self.content.update(_dict)
 
     def __str__(self):
-        return '{"' + """content: "{content}", \
-messageType: "{messageType}", \
-statusCode: "{statusCode}", \
-statusPhrase: "{statusPhrase}", \
-flag: "{flag}", \
-token: "{token}", \
-protocolVersion: "{protocolVersion}""".format(**self.__dict__) + '"}'
+        return '{"' + """content": "{content}", \
+"message_type": "{message_type}", \
+"status_code": "{status_code}", \
+"status_phrase": "{status_phrase}", \
+"flag": "{flag}", \
+"token": "{token}", \
+"protocol_version": "{protocol_version}""".format(**self.__dict__) + '"}'
 
     __repr__ = __str__
 

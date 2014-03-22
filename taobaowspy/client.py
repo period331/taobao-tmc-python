@@ -185,14 +185,30 @@ class TaobaoClient(Client):
 
         return 'tmc_group_add_response' in response
 
+    def del_all_tmc_group(self):
+        """ 删除所有的分组, 返回空数组表示删除完毕"""
+
+        groups = self.tmc_group_get()
+
+        for group in groups:
+            self.request(
+                api='taobao.tmc.group.delete',
+                params={
+                    'group_name': group['name']
+                }
+            )
+
+        return self.tmc_group_get()
+
 
 if __name__ == '__main__':
     client = TaobaoClient(appkey='1021737885', secret='sandboxbbf5579605d7936422c11af0e',
                           api='http://gw.api.tbsandbox.com/router/rest',
                           session='6100f11de277a4d7dd6153772368fafd0993294f50fa1e02074082786')
 
-    client.tmc_group_add('test_1', 'sandbox_c_1')
+    # client.tmc_group_add('test_1', 'sandbox_c_1')
 
+    print client.del_all_tmc_group()
     print client.tmc_group_get()
 
 
