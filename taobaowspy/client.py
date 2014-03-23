@@ -82,12 +82,12 @@ class TaobaoClient(Client):
     def __init__(self, **kwargs):
         super(TaobaoClient, self).__init__(**kwargs)
 
-        self.url = kwargs.pop('api', TaobaoClient.default_url)
+        self.url = kwargs.pop('url', TaobaoClient.default_url)
         self.appkey = kwargs.pop('appkey', '')
         self.secret = kwargs.pop('secret', '')
         self.format = 'json'
         self.sign_method = "md5"
-        self.timeout = kwargs.pop('timeout', 180)
+        self.timeout = kwargs.pop('timeout', 30)
 
         self.session = kwargs.pop('session', '')
 
@@ -99,6 +99,10 @@ class TaobaoClient(Client):
             'timestamp': None,
             'method': None
         }
+
+    def set_session(self, session):
+        """ 设置client的session """
+        self.session = session
 
     def create_sign(self, params):
         """ 创建访问令牌 """
@@ -200,16 +204,25 @@ class TaobaoClient(Client):
 
         return self.tmc_group_get()
 
+    def tmc_user_permit(self, topics=None):
+        """ 为已授权的用户开通消息服务 """
 
-if __name__ == '__main__':
-    client = TaobaoClient(appkey='1021737885', secret='sandboxbbf5579605d7936422c11af0e',
-                          api='http://gw.api.tbsandbox.com/router/rest',
-                          session='6100f11de277a4d7dd6153772368fafd0993294f50fa1e02074082786')
+        params = {}
 
-    # client.tmc_group_add('test_1', 'sandbox_c_1')
+        if topics is not None:
+            if isinstance(topics, basestring):
+                topics = [topics]
+            params['topics'] = topics
 
-    print client.del_all_tmc_group()
-    print client.tmc_group_get()
+        response = self.request(
+            api='taobao.tmc.user.permit',
+            params=params
+        )
+
+        if response is None or 'error_response' in response:
+            return False
+
+        return 'tmc_user_permit_response' in response
 
 
 
