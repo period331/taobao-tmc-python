@@ -14,9 +14,9 @@ from websocket import create_connection
 
 # enableTrace(True)
 
-from taobaowspy.message import MessageIO, Message
+from taobaowspy.message import _MessageIO, Message
 
-messageIo = MessageIO()
+messageIo = _MessageIO()
 
 conn = create_connection('ws://mc.api.tbsandbox.com/')
 # conn = create_connection('ws://127.0.0.1:10000')

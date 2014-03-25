@@ -6,13 +6,15 @@ import sys
 from websocket import ABNF, WebSocketConnectionClosedException, default_timeout, WebSocket, WebSocketException
 from hashlib import md5
 
-from message import messageIO, ConfirmMessage, Message
+from message import messageIO, ConfirmMessage, Message, QueryMessage
 from messagetype import MessageType
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 
 class TaobaoWsClient(object):
     def __init__(self, url, group_name='', app_key='', secret='', delegate=None, log=None, log_group_name=None):
-        self.on_message = delegate if callable(delegate) else lambda message: None
         self.log = log if callable(log) else lambda msg: None
 
         self.url = url
@@ -25,7 +27,7 @@ class TaobaoWsClient(object):
 
         self.sock = None
         self.keep_running = False
-        self.delegate = None
+        self.delegate = delegate
 
         self.token = None
 
@@ -46,7 +48,16 @@ class TaobaoWsClient(object):
 
         self.log('连接: %s, 确认消息数据: %s' % (self.log_group_name, message_id))
 
-        self.send_binary(messageIO.writeMessage(cm))
+        self.send_binary(messageIO.write(cm))
+
+    def send_query(self):
+
+        qm = QueryMessage()
+        qm.token = self.token
+
+        self.log('连接: %s 发送拉取数据请求' % self.log_group_name)
+
+        self.send_binary(messageIO.write(qm))
 
     def ping(self):
         if self.sock:
@@ -77,10 +88,10 @@ class TaobaoWsClient(object):
         }
 
         self.log('连接: %s %s到消息: %s' % (
-            self.log_group_name, m_types.get(str(message.messageType), ''), message)
+            self.log_group_name, m_types.get(str(message.message_type), ''), message)
         )
 
-        if len(message.content) > 0 and str(message.messageType) in m_types.keys():
+        if len(message.content) > 0 and str(message.message_type) in m_types.keys():
             self.delegate(message.content)
 
     @staticmethod
@@ -105,14 +116,14 @@ class TaobaoWsClient(object):
             'group_name': self.group_name,
         }
 
-        message = messageIO.writeMessage(Message(2, 0, flag=1, content=params))
+        message = messageIO.write(Message(2, 0, flag=1, content=params))
 
         self.send_binary(message)
 
     def _restart(self):
         """ 重启线程 """
 
-        self.log('连接: %s 10秒之后重启连接' % self.group_name)
+        self.log('连接: %s 10秒之后重启连接' % self.log_group_name)
         time.sleep(10)
 
         self.sock = None
@@ -157,7 +168,7 @@ class TaobaoWsClient(object):
             conn_message = self.sock.recv()
 
             try:
-                message = messageIO.readMessage(conn_message)
+                message = messageIO.read(conn_message)
             except:
                 message = Message()
 
@@ -171,6 +182,8 @@ class TaobaoWsClient(object):
                         self.log_group_name, message.status_code, message.status_phrase
                     ))
 
+            self.keep_running = True
+
             while self.keep_running:
                 data = self.sock.recv()
 
@@ -178,7 +191,7 @@ class TaobaoWsClient(object):
                     if data is None:
                         continue
 
-                    message = messageIO.readMessage(data)
+                    message = messageIO.read(data)
 
                     self._callback(self.on_message, message)
                 except:

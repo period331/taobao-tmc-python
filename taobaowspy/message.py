@@ -7,7 +7,7 @@ import types
 from taobaowspy.messagetype import MessageType
 
 
-class MessageIO(object):
+class _MessageIO(object):
     def __init__(self):
         pass
 
@@ -15,14 +15,14 @@ class MessageIO(object):
 
         stream = WriteBuffer()
 
-        stream.byte(message.protocolVersion)
-        stream.byte(message.messageType)
+        stream.byte(message.protocol_version)
+        stream.byte(message.message_type)
 
-        if message.statusCode is not None:
+        if message.status_code is not None:
             stream.int16(MessageType.HeaderType.statusCode)
             stream.int32(message.statusCode)
 
-        if message.statusPhrase is not None:
+        if message.status_phrase is not None:
             stream.int16(MessageType.HeaderType.statusCode)
             stream.string(message.statusPhrase)
 
@@ -36,19 +36,19 @@ class MessageIO(object):
 
         if len(message.content) > 0:
             for key, value in message.content.items():
-                self.write_custom_header(stream, key, value)
+                self._write_custom_header(stream, key, value)
 
         stream.int16(MessageType.HeaderType.endOfHeaders)
 
         return stream
 
-    def write_custom_header(self, stream, key, value):
+    def _write_custom_header(self, stream, key, value):
         stream.int16(MessageType.HeaderType.custom)
         stream.string(key)
-        self.write_custom_value(stream, value)
+        self._write_custom_value(stream, value)
 
     @staticmethod
-    def write_custom_value(stream, value):
+    def _write_custom_value(stream, value):
         if not value:
             stream.byte(MessageType.ValueFormat.void)
 
@@ -85,21 +85,21 @@ class MessageIO(object):
 
         while header_type != _header_type.endOfHeaders:
             if header_type == _header_type.custom:
-                key, message.offset = self.read_counted_str(stream, message.offset)
+                key, message.offset = self._read_counted_str(stream, message.offset)
 
-                value, message.offset = self.read_custom_value(stream, message.offset)
+                value, message.offset = self._read_custom_value(stream, message.offset)
 
                 message.content[key] = value
             elif header_type == _header_type.statusCode:
                 message.status_code = unpack_from_wrap('I', message.offset)[0]
                 message.update_offset(calcsize('<I'))
             elif header_type == _header_type.statusPhrase:
-                message.status_code, message.offset = self.read_counted_str(stream, message.offset)
+                message.status_phrase, message.offset = self._read_counted_str(stream, message.offset)
             elif header_type == _header_type.flag:
                 message.flag = unpack_from_wrap('I', message.offset)[0]
                 message.update_offset(calcsize('<I'))
             elif header_type == _header_type.token:
-                message.token, message.offset = self.read_counted_str(stream, message.offset)
+                message.token, message.offset = self._read_counted_str(stream, message.offset)
 
             header_type = unpack_from_wrap('H', message.offset)[0]
             message.update_offset(calcsize('<H'))
@@ -107,9 +107,9 @@ class MessageIO(object):
         return message
 
     @staticmethod
-    def read_counted_str(stream, offset):
+    def _read_counted_str(stream, offset):
         """ 读取字符串 """
-        length = unpack_from('<B', stream, offset)[0]
+        length = unpack_from('<I', stream, offset)[0]
 
         if length > 0:
 
@@ -119,7 +119,7 @@ class MessageIO(object):
         else:
             return None, offset + calcsize('<I')
 
-    def read_custom_value(self, stream, offset):
+    def _read_custom_value(self, stream, offset):
         """ 读取用户数据value """
         _type = unpack_from('<B', stream, offset)[0]
 
@@ -144,10 +144,10 @@ class MessageIO(object):
             _l = unpack_from('<I', stream, offset)[0]
             return unpack_from('<%dB' % _l, stream, offset + calcsize('<I'))[0], offset + calcsize('<I%dB' % _l)
         else:
-            return self.read_counted_str(stream, offset)
+            return self._read_counted_str(stream, offset)
 
 
-messageIO = MessageIO()
+messageIO = _MessageIO()
 
 
 class Message(object):

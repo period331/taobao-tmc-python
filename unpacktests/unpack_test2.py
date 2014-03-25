@@ -23,9 +23,9 @@ print len(querenlianjie)
 print struct.unpack('<2Bhihi36sh', bs)
 print len(''.join([str(i) for i in struct.unpack('<2Bhihi36sh', bs)]))
 
-from taobaowspy.message import MessageIO
+from taobaowspy.message import _MessageIO
 
-io = MessageIO()
+io = _MessageIO()
 message = io.read(bs)
 print message.protocol_version
 print message.message_type

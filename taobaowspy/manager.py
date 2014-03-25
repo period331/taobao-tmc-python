@@ -1,10 +1,13 @@
 # coding: utf8
 
 from Queue import Queue
+from random import randint
+import time
+
 from client import TaobaoClient
 from utils import Shop, get_logger
 from taobaowsclient import TaobaoWsClient
-from threads import TaobaoWsThread, HeartbeatThread
+from threads import TaobaoWsThread, HeartbeatThread, InitiativeQuery
 
 
 class MessageManager(object):
@@ -40,9 +43,25 @@ class MessageManager(object):
             _thread.setDaemon(True)
             _thread.start()
 
+            time.sleep(1)
+
         heartbeat = HeartbeatThread(self.ws_clients, log=self.info)
         heartbeat.setDaemon(True)
         heartbeat.start()
+
+    def _get_alive_client(self):
+        """ 获得一个活动的线程 """
+        def _():
+            _randint = randint(0, len(self.ws_clients) - 1)
+
+            _client = self.ws_clients[_randint]
+
+            if _client.sock is not None and _client.keep_running:
+                return _client
+            else:
+                return _()
+
+        return _()
 
     def on_message(self, message):
         self.message_queue.put_nowait(message)
@@ -69,14 +88,35 @@ class MessageManager(object):
 
         return self.__logger
 
+    def run(self):
+        """ 开启运行 """
+
+        # with InitiativeQuery(self._get_alive_client, self.info) as iq:
+
+        self._create_threads()
+
+        while True:
+            message = self.message_queue.get()
+
+            # if message is not None:
+            #     iq.reset_frequency()
+
+            _client = self._get_alive_client()
+
+            _client.send_confirm(message['id'])
+
+            print message
+
 
 if __name__ == '__main__':
 
-    _shop = Shop(name='sandbox_c_1', session='61005236cadbd3f41c8aea2d4ba802017c0c448d3f487ac2074082786')
+    _shop = Shop(name='sandbox_c_1', session='6100f19de277a4d7dd68fafd0991b2b912c3294f50fa1e02074082786')
 
-    manager = MessageManager(connections=3, appkey='1021737885', secret='sandboxbbf5579605d7936422c11af0e',
+    manager = MessageManager(connections=3, appkey='', secret='',
                              url='http://gw.api.tbsandbox.com/router/rest',
-                             session='6100f11de277a4d7dd6153772368fafd0993294f50fa1e02074082786',
+                             session='6100f19de277a4d7dd68fafd0991b2b912c3294f50fa1e02074082786',
                              ws_url='ws://mc.api.tbsandbox.com/')
 
     manager.set_shops([_shop])
+
+    manager.run()
