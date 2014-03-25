@@ -39,11 +39,9 @@ class MessageManager(object):
         for index in range(self.connections):
             _client = _create_client(index)
             self.ws_clients.append(_client)
-            _thread = TaobaoWsThread(_client)
+            _thread = TaobaoWsThread(_client, index)
             _thread.setDaemon(True)
             _thread.start()
-
-            time.sleep(1)
 
         heartbeat = HeartbeatThread(self.ws_clients, log=self.info)
         heartbeat.setDaemon(True)
