@@ -25,5 +25,5 @@ class Event(object):
 
     def fire(self, name, *args, **kwargs):
         for ev in self.__listeners[name]:
-            ev(*args, kwargs)
+            ev(*args, **kwargs)
 

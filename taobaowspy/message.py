@@ -4,13 +4,13 @@ from struct import calcsize, unpack_from, pack
 from datetime import datetime
 import types
 
-from taobaowspy.messagetype import MessageType
+from messagetype import MessageType
 
 
-class Reader(object):
+class _Reader(object):
 
-    @staticmethod
-    def read(stream):
+    @classmethod
+    def read(cls, stream):
         """ 读取消息数据 """
 
         def unpack_from_wrap(fmt, offset):
@@ -27,21 +27,21 @@ class Reader(object):
 
         while header_type != _header_type.endOfHeaders:
             if header_type == _header_type.custom:
-                key, message.offset = self._read_counted_str(stream, message.offset)
+                key, message.offset = cls._read_counted_str(stream, message.offset)
 
-                value, message.offset = self._read_custom_value(stream, message.offset)
+                value, message.offset = cls._read_custom_value(stream, message.offset)
 
                 message.content[key] = value
             elif header_type == _header_type.statusCode:
                 message.status_code = unpack_from_wrap('I', message.offset)[0]
                 message.update_offset(calcsize('<I'))
             elif header_type == _header_type.statusPhrase:
-                message.status_phrase, message.offset = self._read_counted_str(stream, message.offset)
+                message.status_phrase, message.offset = cls._read_counted_str(stream, message.offset)
             elif header_type == _header_type.flag:
                 message.flag = unpack_from_wrap('I', message.offset)[0]
                 message.update_offset(calcsize('<I'))
             elif header_type == _header_type.token:
-                message.token, message.offset = self._read_counted_str(stream, message.offset)
+                message.token, message.offset = cls._read_counted_str(stream, message.offset)
 
             header_type = unpack_from_wrap('H', message.offset)[0]
             message.update_offset(calcsize('<H'))
@@ -61,8 +61,8 @@ class Reader(object):
         else:
             return None, offset + calcsize('<I')
 
-    @staticmethod
-    def _read_custom_value(stream, offset):
+    @classmethod
+    def _read_custom_value(cls, stream, offset):
         """ 读取用户数据value """
         _type = unpack_from('<B', stream, offset)[0]
 
@@ -87,13 +87,15 @@ class Reader(object):
             _l = unpack_from('<I', stream, offset)[0]
             return unpack_from('<%dB' % _l, stream, offset + calcsize('<I'))[0], offset + calcsize('<I%dB' % _l)
         else:
-            return self._read_counted_str(stream, offset)
+            return cls._read_counted_str(stream, offset)
+
+reader = lambda stream: _Reader.read(stream)
 
 
-class Writer(object):
+class _Writer(object):
 
-    @staticmethod
-    def write(message):
+    @classmethod
+    def write(cls, message):
 
         stream = WriteBuffer()
 
@@ -118,17 +120,17 @@ class Writer(object):
 
         if len(message.content) > 0:
             for key, value in message.content.items():
-                self._write_custom_header(stream, key, value)
+                cls._write_custom_header(stream, key, value)
 
         stream.int16(MessageType.HeaderType.endOfHeaders)
 
         return stream
 
-    @staticmethod
-    def _write_custom_header(stream, key, value):
+    @classmethod
+    def _write_custom_header(cls, stream, key, value):
         stream.int16(MessageType.HeaderType.custom)
         stream.string(key)
-        self._write_custom_value(stream, value)
+        cls._write_custom_value(stream, value)
 
     @staticmethod
     def _write_custom_value(stream, value):
@@ -150,6 +152,8 @@ class Writer(object):
         else:
             stream.byte(MessageType.ValueFormat.countedString)
             stream.string(value)
+
+writer = lambda message: bytes(_Writer.write(message))
 
 
 class WriteBuffer(bytearray):
