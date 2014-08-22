@@ -7,68 +7,10 @@ import types
 from taobaowspy.messagetype import MessageType
 
 
-class _MessageIO(object):
-    def __init__(self):
-        pass
-
-    def write(self, message):
-
-        stream = WriteBuffer()
-
-        stream.byte(message.protocol_version)
-        stream.byte(message.message_type)
-
-        if message.status_code is not None:
-            stream.int16(MessageType.HeaderType.statusCode)
-            stream.int32(message.statusCode)
-
-        if message.status_phrase is not None:
-            stream.int16(MessageType.HeaderType.statusCode)
-            stream.string(message.statusPhrase)
-
-        if message.flag is not None:
-            stream.int16(MessageType.HeaderType.flag)
-            stream.int32(message.flag)
-
-        if message.token is not None:
-            stream.int16(MessageType.HeaderType.token)
-            stream.string(message.token)
-
-        if len(message.content) > 0:
-            for key, value in message.content.items():
-                self._write_custom_header(stream, key, value)
-
-        stream.int16(MessageType.HeaderType.endOfHeaders)
-
-        return stream
-
-    def _write_custom_header(self, stream, key, value):
-        stream.int16(MessageType.HeaderType.custom)
-        stream.string(key)
-        self._write_custom_value(stream, value)
+class Reader(object):
 
     @staticmethod
-    def _write_custom_value(stream, value):
-        if not value:
-            stream.byte(MessageType.ValueFormat.void)
-
-        if isinstance(value, types.IntType) and value < ((1 << 8) - 1):
-            stream.byte(MessageType.ValueFormat.byte)
-            stream.byte(value)
-        elif isinstance(value, types.IntType) and value < ((1 << 16) - 1):
-            stream.byte(MessageType.ValueFormat.int16)
-            stream.int16(value)
-        elif isinstance(value, types.IntType) and value < ((1 << 32) - 1):
-            stream.byte(MessageType.ValueFormat.int32)
-            stream.int32(value)
-        elif isinstance(value, types.IntType) and value < ((1 << 64) - 1):
-            stream.byte(MessageType.ValueFormat.int64)
-            stream.int64(value)
-        else:
-            stream.byte(MessageType.ValueFormat.countedString)
-            stream.string(value)
-
-    def read(self, stream):
+    def read(stream):
         """ 读取消息数据 """
 
         def unpack_from_wrap(fmt, offset):
@@ -119,7 +61,8 @@ class _MessageIO(object):
         else:
             return None, offset + calcsize('<I')
 
-    def _read_custom_value(self, stream, offset):
+    @staticmethod
+    def _read_custom_value(stream, offset):
         """ 读取用户数据value """
         _type = unpack_from('<B', stream, offset)[0]
 
@@ -147,7 +90,86 @@ class _MessageIO(object):
             return self._read_counted_str(stream, offset)
 
 
-messageIO = _MessageIO()
+class Writer(object):
+
+    @staticmethod
+    def write(message):
+
+        stream = WriteBuffer()
+
+        stream.byte(message.protocol_version)
+        stream.byte(message.message_type)
+
+        if message.status_code is not None:
+            stream.int16(MessageType.HeaderType.statusCode)
+            stream.int32(message.statusCode)
+
+        if message.status_phrase is not None:
+            stream.int16(MessageType.HeaderType.statusCode)
+            stream.string(message.statusPhrase)
+
+        if message.flag is not None:
+            stream.int16(MessageType.HeaderType.flag)
+            stream.int32(message.flag)
+
+        if message.token is not None:
+            stream.int16(MessageType.HeaderType.token)
+            stream.string(message.token)
+
+        if len(message.content) > 0:
+            for key, value in message.content.items():
+                self._write_custom_header(stream, key, value)
+
+        stream.int16(MessageType.HeaderType.endOfHeaders)
+
+        return stream
+
+    @staticmethod
+    def _write_custom_header(stream, key, value):
+        stream.int16(MessageType.HeaderType.custom)
+        stream.string(key)
+        self._write_custom_value(stream, value)
+
+    @staticmethod
+    def _write_custom_value(stream, value):
+        if not value:
+            stream.byte(MessageType.ValueFormat.void)
+
+        if isinstance(value, types.IntType) and value < ((1 << 8) - 1):
+            stream.byte(MessageType.ValueFormat.byte)
+            stream.byte(value)
+        elif isinstance(value, types.IntType) and value < ((1 << 16) - 1):
+            stream.byte(MessageType.ValueFormat.int16)
+            stream.int16(value)
+        elif isinstance(value, types.IntType) and value < ((1 << 32) - 1):
+            stream.byte(MessageType.ValueFormat.int32)
+            stream.int32(value)
+        elif isinstance(value, types.IntType) and value < ((1 << 64) - 1):
+            stream.byte(MessageType.ValueFormat.int64)
+            stream.int64(value)
+        else:
+            stream.byte(MessageType.ValueFormat.countedString)
+            stream.string(value)
+
+
+class WriteBuffer(bytearray):
+    def byte(self, v):
+        self.extend(pack('<B', v))
+
+    def string(self, v):
+        if len(v) > 0:
+            self.extend(pack('<I%ds' % len(v), len(v), str(v)))
+        else:
+            self.extend(pack('<B', 0))
+
+    def int16(self, v):
+        self.extend(pack('<H', v))
+
+    def int32(self, v):
+        self.extend(pack('<I', v))
+
+    def int64(self, v):
+        self.extend(pack('<Q', v))
 
 
 class Message(object):
@@ -198,23 +220,3 @@ class QueryMessage(Message):
         self.message_type = 2
 
         self.content = {'__kind': 1}
-
-
-class WriteBuffer(bytearray):
-    def byte(self, v):
-        self.extend(pack('<B', v))
-
-    def string(self, v):
-        if len(v) > 0:
-            self.extend(pack('<I%ds' % len(v), len(v), str(v)))
-        else:
-            self.extend(pack('<B', 0))
-
-    def int16(self, v):
-        self.extend(pack('<H', v))
-
-    def int32(self, v):
-        self.extend(pack('<I', v))
-
-    def int64(self, v):
-        self.extend(pack('<Q', v))
