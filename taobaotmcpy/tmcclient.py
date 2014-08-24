@@ -38,7 +38,7 @@ class TmcClient(WebSocket, Event):
 
         self.token = None
 
-        self.fire('init')
+        self.fire('on_init')
         self.on('on_handshake_success', self._start_query_loop)
         self.on('on_handshake_success', self._start_heartbeat)
         self.on('on_confirm_message', self._on_confirm_message)
@@ -88,17 +88,17 @@ class TmcClient(WebSocket, Event):
             raise
 
         self.fire('received_message')
-        logger.debug('[%s:%s]Recevied message %s' % (self.url, self.group_name, message))
+        logger.debug('[%s:%s]Recevied Message %s' % (self.url, self.group_name, message))
 
         if message.message_type == 1:  # 发送连接数据返回
             self.token = message.token
-            logger.info('[%s:%s]TMC Handshake Success. The Token is %s'
+            logger.info('[%s:%s]TMC Handshake Success. The Token Is %s'
                 % (self.url, self.group_name, message.token))
             self.fire('on_handshake_success', token=self.token)
         elif message.message_type == 2:  # 服务器主动通知消息
             self.fire('on_confirm_message', message_id=message.content.get('id'))
             self.fire('on_message', message=message)
-        elif message_type.message_type == 3:  # 主动拉取消息返回
+        elif message.message_type == 3:  # 主动拉取消息返回
             pass
 
     def on_ping(self):
@@ -114,7 +114,7 @@ class TmcClient(WebSocket, Event):
         self.fire('on_close')
 
     def on_unsupported(self):
-        self.fire('abort')
+        self.fire('on_abort')
         logger.error('[%s:%s]Abort Error.', (self.url, self.group_name))
 
     def _on_confirm_message(self, message_id):
@@ -134,7 +134,7 @@ class TmcClient(WebSocket, Event):
         periodic = ioloop.PeriodicCallback(_query_message_loop(self, self.url, self.group_name, self.token),
             self.query_message_interval * 1000, io_loop=self.io_loop)
 
-        logger.info('[%s:%s]Start Query Message Interval' % (self.url, self.group_name))
+        logger.info('[%s:%s]Start Query Message Interval.' % (self.url, self.group_name))
 
         periodic.start()
 
