@@ -6,9 +6,10 @@ from hashlib import md5
 
 from event import Event
 from tornadowebsocket import WebSocket
-from message import reader, writer, Message
+from messageio import reader, writer
 from tornado import ioloop, iostream
-from message import confirm_message, query_message
+from message import Message
+from utils import confirm_message, query_message
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class TmcClient(WebSocket, Event):
         self.fire('init')
         self.on('on_handshake_success', self._start_query_loop)
         self.on('on_handshake_success', self._start_heartbeat)
-        self.on('confirm_message', self._on_confirm_message)
+        self.on('on_confirm_message', self._on_confirm_message)
 
     def create_sign(self, timestamp):
         timestamp = timestamp if timestamp else int(round(time.time() * 1000))
@@ -78,11 +79,13 @@ class TmcClient(WebSocket, Event):
         self.write_message(message, True)
 
     def on_message(self, data):
+        message = None
         try:
             message = reader(data)
         except:
             logging.error('[%s:%s]Message Parse Error.' % (self.url, self.group_name))
             self.fire('parse_message_error')
+            raise
 
         self.fire('received_message')
         logger.debug('[%s:%s]Recevied message %s' % (self.url, self.group_name, message))
@@ -93,8 +96,10 @@ class TmcClient(WebSocket, Event):
                 % (self.url, self.group_name, message.token))
             self.fire('on_handshake_success', token=self.token)
         elif message.message_type == 2:  # 服务器主动通知消息
-            self.fire('confirm_message')
+            self.fire('on_confirm_message', message_id=message.content.get('id'))
             self.fire('on_message', message=message)
+        elif message_type.message_type == 3:  # 主动拉取消息返回
+            pass
 
     def on_ping(self):
         logger.debug('[%s:%s]Recevied Ping.', (self.url, self.group_name))
@@ -113,7 +118,8 @@ class TmcClient(WebSocket, Event):
         logger.error('[%s:%s]Abort Error.', (self.url, self.group_name))
 
     def _on_confirm_message(self, message_id):
-        cm = confirm_message(self.message_id, self.token)
+        cm = confirm_message(message_id, self.token)
+        logger.debug('[%s"%s]Confirm Message: %s' % (self.url, self.group_name, message_id))
         self.write_binary(cm)
 
     def _start_query_loop(self, token=None):
@@ -132,7 +138,7 @@ class TmcClient(WebSocket, Event):
 
         periodic.start()
 
-    def _start_heartbeat(self):
+    def _start_heartbeat(self, token):
         def _heartbeat(self, url, group_name):
             def _():
                 logging.debug('[%s:%s]Send Heartbeat.' % (url, group_name))
@@ -142,7 +148,7 @@ class TmcClient(WebSocket, Event):
         periodic = ioloop.PeriodicCallback(_heartbeat(self, self.url, self.group_name),
             self.heartbeat_interval * 1000, io_loop=self.io_loop)
 
-        logger.info('[%s:%s]Start Query Message Interval' % (self.url, self.group_name))
+        logger.info('[%s:%s]Start Heartbeat Message Interval' % (self.url, self.group_name))
 
         periodic.start()
 

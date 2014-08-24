@@ -1,6 +1,6 @@
 # coding: utf-8
 
-__all__ = ['reader', 'writer', 'confirm_message', 'query_message']
+__all__ = ['reader', 'writer']
 
 from struct import calcsize, unpack_from, pack
 from datetime import datetime
@@ -8,6 +8,7 @@ import types
 
 
 from messagetype import MessageType
+from message import Message
 
 
 class _Reader(object):
