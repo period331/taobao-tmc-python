@@ -223,17 +223,3 @@ class TaobaoClient(Client):
             return False
 
         return 'tmc_user_permit_response' in response
-
-
-
-
-
-
-        
-
-
-
-        
-
-
-

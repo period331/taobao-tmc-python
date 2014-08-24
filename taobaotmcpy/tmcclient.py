@@ -40,6 +40,7 @@ class TmcClient(WebSocket, Event):
         self.fire('init')
         self.on('on_handshake_success', self._start_query_loop)
         self.on('on_handshake_success', self._start_heartbeat)
+        self.on('confirm_message', self._on_confirm_message)
 
     def create_sign(self, timestamp):
         timestamp = timestamp if timestamp else int(round(time.time() * 1000))
@@ -96,16 +97,20 @@ class TmcClient(WebSocket, Event):
             self.fire('on_message', message=message)
 
     def on_ping(self):
+        logger.debug('[%s:%s]Recevied Ping.', (self.url, self.group_name))
         self.fire('on_ping')
 
     def on_pong(self):
+        logger.debug('[%s:%s]Recevied Pong.', (self.url, self.group_name))
         self.fire('on_pong')
 
     def on_close(self):
+        logger.error('[%s:%s]TMC Connection Close Error.', (self.url, self.group_name))
         self.fire('on_close')
 
     def on_unsupported(self):
         self.fire('abort')
+        logger.error('[%s:%s]Abort Error.', (self.url, self.group_name))
 
     def _on_confirm_message(self, message_id):
         cm = confirm_message(self.message_id, self.token)
