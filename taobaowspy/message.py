@@ -1,8 +1,11 @@
 # coding: utf-8
 
+__all__ = ['reader', 'writer', 'confirm_message', 'query_message']
+
 from struct import calcsize, unpack_from, pack
 from datetime import datetime
 import types
+
 
 from messagetype import MessageType
 
@@ -137,16 +140,16 @@ class _Writer(object):
         if not value:
             stream.byte(MessageType.ValueFormat.void)
 
-        if isinstance(value, types.IntType) and value < ((1 << 8) - 1):
+        if isinstance(value, (types.IntType, types.LongType)) and value < ((1 << 8) - 1):
             stream.byte(MessageType.ValueFormat.byte)
             stream.byte(value)
-        elif isinstance(value, types.IntType) and value < ((1 << 16) - 1):
+        elif isinstance(value, (types.IntType, types.LongType)) and value < ((1 << 16) - 1):
             stream.byte(MessageType.ValueFormat.int16)
             stream.int16(value)
-        elif isinstance(value, types.IntType) and value < ((1 << 32) - 1):
+        elif isinstance(value, (types.IntType, types.LongType)) and value < ((1 << 32) - 1):
             stream.byte(MessageType.ValueFormat.int32)
             stream.int32(value)
-        elif isinstance(value, types.IntType) and value < ((1 << 64) - 1):
+        elif isinstance(value, (types.IntType, types.LongType)) and value < ((1 << 64) - 1):
             stream.byte(MessageType.ValueFormat.int64)
             stream.int64(value)
         else:
@@ -192,13 +195,17 @@ class Message(object):
     def update_offset(self, offset):
         self.offset = self.offset + offset
 
+        return self
+
     def update_content(self, _dict):
         if isinstance(_dict, dict):
             self.content.update(_dict)
 
+        return self
+
     def __str__(self):
         return '{"' + """content": "{content}", \
-"message_type": "{message_type}", \
+"message_type": {message_type}, \
 "status_code": "{status_code}", \
 "status_phrase": "{status_phrase}", \
 "flag": "{flag}", \
@@ -208,19 +215,30 @@ class Message(object):
     __repr__ = __str__
 
 
-class ConfirmMessage(Message):
+class _ConfirmMessage(Message):
     def __init__(self, *args, **kwargs):
-        super(ConfirmMessage, self).__init__(*args, **kwargs)
+        super(_ConfirmMessage, self).__init__(*args, **kwargs)
 
         self.message_type = 2
 
         self.content = {'__kind': 2}
 
 
-class QueryMessage(Message):
+def confirm_message(message_id, token):
+    cm = _ConfirmMessage()
+    cm.token = token
+    cm.update_content({'id': message_id})
+
+    return writer(cm)
+
+
+class _QueryMessage(Message):
     def __init__(self, *args, **kwargs):
-        super(QueryMessage, self).__init__(*args, **kwargs)
+        super(_QueryMessage, self).__init__(*args, **kwargs)
 
         self.message_type = 2
 
         self.content = {'__kind': 1}
+
+
+query_message = lambda **kwargs: writer(_QueryMessage(**kwargs))
