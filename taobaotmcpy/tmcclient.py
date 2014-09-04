@@ -40,7 +40,6 @@ class TmcClient(WebSocket, Event):
 
         self.fire('on_init')
         self.on('on_handshake_success', self._start_query_loop)
-        self.on('on_handshake_success', self._start_heartbeat)
         self.on('on_confirm_message', self._on_confirm_message)
 
     def create_sign(self, timestamp):
@@ -53,7 +52,7 @@ class TmcClient(WebSocket, Event):
 
         keys = params.keys()
         keys.sort()
-        
+
         params = "%s%s%s" % (self.app_secret, str().join('%s%s' % (key, params[key]) for key in keys), self.app_secret)
         return md5(params).hexdigest().upper()
 
@@ -135,20 +134,6 @@ class TmcClient(WebSocket, Event):
             self.query_message_interval * 1000, io_loop=self.io_loop)
 
         logger.info('[%s:%s]Start Query Message Interval.' % (self.url, self.group_name))
-
-        periodic.start()
-
-    def _start_heartbeat(self, token):
-        def _heartbeat(self, url, group_name):
-            def _():
-                logging.debug('[%s:%s]Send Heartbeat.' % (url, group_name))
-                self.ping()
-            return _
-
-        periodic = ioloop.PeriodicCallback(_heartbeat(self, self.url, self.group_name),
-            self.heartbeat_interval * 1000, io_loop=self.io_loop)
-
-        logger.info('[%s:%s]Start Heartbeat Message Interval' % (self.url, self.group_name))
 
         periodic.start()
 
