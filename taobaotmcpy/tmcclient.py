@@ -18,7 +18,7 @@ logger = logging.getLogger('taobao-tmc')
 
 class TmcClient(WebSocket, Event):
     def __init__(self, url, app_key, app_secret, group_name='default', query_message_interval=50, heartbeat_interval=30,
-                 *args, **kwargs):
+                 sdk_version='top-sdk-java-201403304', *args, **kwargs):
         super(TmcClient, self).__init__(url, *args, **kwargs)
         Event.__init__(self)
 
@@ -31,6 +31,7 @@ class TmcClient(WebSocket, Event):
         assert isinstance(query_message_interval, int) and 0 < query_message_interval < 60
         assert isinstance(heartbeat_interval, int) and 0 < heartbeat_interval < 60
 
+        self.sdk_version = sdk_version
         self.url = url
         self.app_secret = app_secret
         self.app_key = app_key
@@ -65,7 +66,7 @@ class TmcClient(WebSocket, Event):
         params = {
             'timestamp': str(timestamp),
             'app_key': self.app_key,
-            'sdk': 'top-sdk-java-201403304',
+            'sdk': self.sdk_version,
             'sign': self.create_sign(timestamp),
             'group_name': self.group_name,
         }
@@ -102,15 +103,15 @@ class TmcClient(WebSocket, Event):
             pass
 
     def on_ping(self):
-        logger.debug('[%s:%s]Received Ping.', (self.url, self.group_name))
+        logger.debug('[%s:%s]Received Ping.' % (self.url, self.group_name))
         self.fire('on_ping')
 
     def on_pong(self):
-        logger.debug('[%s:%s]Received Pong.', (self.url, self.group_name))
+        logger.debug('[%s:%s]Received Pong.' % (self.url, self.group_name))
         self.fire('on_pong')
 
     def on_close(self):
-        logger.error('[%s:%s]TMC Connection Close Error.', (self.url, self.group_name))
+        logger.error('[%s:%s]TMC Connection Close Error.' % (self.url, self.group_name))
         self.fire('on_close')
 
     def on_unsupported(self):
