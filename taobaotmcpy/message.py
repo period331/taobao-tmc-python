@@ -1,10 +1,9 @@
 # coding: utf-8
 
+__author__ = 'baocaixiong'
+
 __all__ = ['ConfirmMessage', 'QueryMessage', 'Message']
 
-from struct import calcsize, unpack_from, pack
-from datetime import datetime
-import types
 from json import dumps
 
 

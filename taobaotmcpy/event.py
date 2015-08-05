@@ -1,10 +1,17 @@
-#coding: utf-8
+# coding: utf-8
+
+__author__ = 'baocaixiong'
 
 from collections import defaultdict
 
-class InvalidListenerError(Exception): pass
 
-class DuplicateListenerError(Exception): pass
+class InvalidListenerError(Exception):
+    pass
+
+
+class DuplicateListenerError(Exception):
+    pass
+
 
 class Event(object):
     def __init__(self, *args, **kwargs):
@@ -26,4 +33,3 @@ class Event(object):
     def fire(self, name, *args, **kwargs):
         for ev in self.__listeners[name]:
             ev(*args, **kwargs)
-

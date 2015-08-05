@@ -1,4 +1,4 @@
-#coding: utf-8
+# coding: utf-8
 #
 """
 fork from https://github.com/jbalogh/tornado-websocket-client
@@ -318,11 +318,11 @@ class WebSocket(object):
             except Exception:
                 logging.error('Uncaught exception', exc_info=True)
                 self._abort()
+
         return wrapper
 
 
 def main(url, message='hello, world'):
-
     class HelloSocket(WebSocket):
 
         def on_open(self):

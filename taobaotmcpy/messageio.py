@@ -1,11 +1,12 @@
 # coding: utf-8
 
+__author__ = 'baocaixiong'
+
 __all__ = ['reader', 'writer']
 
-from struct import calcsize, unpack_from, pack
-from datetime import datetime
 import types
-
+from datetime import datetime
+from struct import calcsize, unpack_from, pack
 
 from messagetype import MessageType
 from message import Message

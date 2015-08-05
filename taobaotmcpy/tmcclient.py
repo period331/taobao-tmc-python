@@ -1,26 +1,28 @@
-#coding: utf-8
+# coding: utf-8
+__author__ = 'baocaixiong'
 
 import time
 import logging
 from hashlib import md5
 
+from tornado import ioloop
+
 from event import Event
-from tornadowebsocket import WebSocket
-from messageio import reader, writer
-from tornado import ioloop, iostream
 from message import Message
+from messageio import reader, writer
+from tornadowebsocket import WebSocket
 from utils import confirm_message, query_message
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('taobao-tmc')
 
 
 class TmcClient(WebSocket, Event):
-    def __init__(self, url, app_key, app_secret, group_name='default',
-            query_message_interval=50, heartbeat_interval=30, *args, **kwargs):
+    def __init__(self, url, app_key, app_secret, group_name='default', query_message_interval=50, heartbeat_interval=30,
+                 *args, **kwargs):
         super(TmcClient, self).__init__(url, *args, **kwargs)
         Event.__init__(self)
 
-        logger.info('[%s:%s]WebSocket Connect Success.' % (url, group_name))
+        logger.info('[%s:%s]WebSocket Start Connect.' % (url, group_name))
 
         assert isinstance(url, (str, unicode)) and len(url) > 0
         assert isinstance(app_key, (str, unicode)) and len(app_key) > 0
@@ -78,7 +80,6 @@ class TmcClient(WebSocket, Event):
         self.write_message(message, True)
 
     def on_message(self, data):
-        message = None
         try:
             message = reader(data)
         except:
@@ -87,12 +88,12 @@ class TmcClient(WebSocket, Event):
             raise
 
         self.fire('received_message')
-        logger.debug('[%s:%s]Recevied Message %s' % (self.url, self.group_name, message))
+        logger.debug('[%s:%s]Received Message %s' % (self.url, self.group_name, message))
 
         if message.message_type == 1:  # 发送连接数据返回
             self.token = message.token
             logger.info('[%s:%s]TMC Handshake Success. The Token Is %s'
-                % (self.url, self.group_name, message.token))
+                        % (self.url, self.group_name, message.token))
             self.fire('on_handshake_success', token=self.token)
         elif message.message_type == 2:  # 服务器主动通知消息
             self.fire('on_confirm_message', message_id=message.content.get('id'))
@@ -101,11 +102,11 @@ class TmcClient(WebSocket, Event):
             pass
 
     def on_ping(self):
-        logger.debug('[%s:%s]Recevied Ping.', (self.url, self.group_name))
+        logger.debug('[%s:%s]Received Ping.', (self.url, self.group_name))
         self.fire('on_ping')
 
     def on_pong(self):
-        logger.debug('[%s:%s]Recevied Pong.', (self.url, self.group_name))
+        logger.debug('[%s:%s]Received Pong.', (self.url, self.group_name))
         self.fire('on_pong')
 
     def on_close(self):
@@ -114,7 +115,7 @@ class TmcClient(WebSocket, Event):
 
     def on_unsupported(self):
         self.fire('on_abort')
-        logger.error('[%s:%s]Abort Error.', (self.url, self.group_name))
+        logger.error('[%s:%s]Abort Error.' % (self.url, self.group_name))
 
     def _on_confirm_message(self, message_id):
         cm = confirm_message(message_id, self.token)
@@ -124,30 +125,17 @@ class TmcClient(WebSocket, Event):
     def _start_query_loop(self, token=None):
         """ 开启主动拉取消息循环 """
 
-        def _query_message_loop(self, url, group_name, token):
+        def _query_message_loop(_self, url, group_name, _token):
             def _():
                 logger.debug('[%s:%s]Send Query Message Request.' % (url, group_name))
-                self.write_binary(query_message(token=token))
+                _self.write_binary(query_message(token=_token))
+
             return _
 
         periodic = ioloop.PeriodicCallback(_query_message_loop(self, self.url, self.group_name, self.token),
-            self.query_message_interval * 1000, io_loop=self.io_loop)
+                                           self.query_message_interval * 1000, io_loop=self.io_loop)
 
         logger.info('[%s:%s]Start Query Message Interval.' % (self.url, self.group_name))
 
         periodic.start()
 
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    ws = TmcClient('ws://mc.api.tbsandbox.com/', '1021737885', 'sandboxbbf5579605d7936422c11af0e', 'default',
-        query_message_interval=50)
-    def print1():
-        print 'on_open'
-    ws.on("on_open", print1)
-    try:
-        ioloop.IOLoop.instance().start()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        ws.close()

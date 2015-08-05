@@ -1,4 +1,5 @@
-#coding: utf-8
+# coding: utf-8
+__author__ = 'baocaixiong'
 
 from message import ConfirmMessage, QueryMessage
 from messageio import writer

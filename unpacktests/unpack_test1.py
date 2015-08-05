@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import sys
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -15,11 +16,9 @@ message3 = '020205002400000064326333653836342d636636642d343838382d386662332d3562
 
 message4 = '0202050024000000 64326333653836342d636636642d343838382d386662332d356262393537313962303162 0100 05000000 746f706963 011a000000 74616f62616f5f74726164655f54726164654275796572506179 0100 06000000 757365726964057f43f92a000000000100060000005f5f6b696e6402030100090000007075626c697368657201080000003132343937393134010007000000726574726965640201010007000000636f6e74656e74019f0000007b2262757965725f6e69636b223a22e88c89e889b2e5aeb9e9a29c222c227061796d656e74223a22313739392e3030222c226f6964223a3537313039303136313439333432382c22746964223a3537313039303136313439333432382c2274797065223a2267756172616e7465655f7472616465222c2273656c6c65725f6e69636b223a22687463e585b4e995bfe4bfa1e8bebee4b893e58d96e5ba97227d010002000000696405070099e4e0ac951d010007000000646174615f696405b4e5354a6707020001000400000074696d650666ac4cc4440100000100040000006e69636b0118000000687463e585b4e995bfe4bfa1e8bebee4b893e58d96e5ba9701000600000064617461696405b4e5354a67070200010009000000626f726e5f74696d650566ac4cc4440100000100070000006f757474696d6506b2bf98ce440100000000'
 
-
 message = '020205002400000064326333653836342d636636642d343838382d386662332d356262393537313962303162010005000000746f706963011a00000074616f62616f5f74726164655f54726164654275796572506179010006000000757365726964057f43f92a000000000100060000005f5f6b696e6402030100090000007075626c697368657201080000003132343937393134010007000000726574726965640201010007000000636f6e74656e74019f0000007b2262757965725f6e69636b223a22e88c89e889b2e5aeb9e9a29c222c227061796d656e74223a22313739392e3030222c226f6964223a3537313039303136313439333432382c22746964223a3537313039303136313439333432382c2274797065223a2267756172616e7465655f7472616465222c2273656c6c65725f6e69636b223a22687463e585b4e995bfe4bfa1e8bebee4b893e58d96e5ba97227d010002000000696405070099e4e0ac951d010007000000646174615f696405b4e5354a6707020001000400000074696d650666ac4cc4440100000100040000006e69636b0118000000687463e585b4e995bfe4bfa1e8bebee4b893e58d96e5ba9701000600000064617461696405b4e5354a67070200010009000000626f726e5f74696d650566ac4cc4440100000100070000006f757474696d6506b2bf98ce440100000000'
 
 bs = unhexlify(message)
-
 
 print struct.unpack_from('<B', bs), 0, '1'
 print struct.unpack_from('<B', bs, struct.calcsize('<B')), struct.calcsize('<B'), '2'
@@ -29,16 +28,18 @@ print struct.unpack_from('<36s', bs, struct.calcsize('<2Bhi')), struct.calcsize(
 
 print struct.unpack_from('<h', bs, struct.calcsize('<2Bhi36s')), struct.calcsize('<2Bhi36s'), '6'
 print struct.unpack_from('<i', bs, struct.calcsize('<2Bhi36sh')), struct.calcsize('<2Bhi36sh'), '7'
-print struct.unpack_from('<5s', bs, struct.calcsize('<2Bhi36shi')),struct.calcsize('<2Bhi36shi'), '8'
-print struct.unpack_from('<b', bs, struct.calcsize('<2Bhi36shi5s')),struct.calcsize('<2Bhi36shi5s'),'9'
+print struct.unpack_from('<5s', bs, struct.calcsize('<2Bhi36shi')), struct.calcsize('<2Bhi36shi'), '8'
+print struct.unpack_from('<b', bs, struct.calcsize('<2Bhi36shi5s')), struct.calcsize('<2Bhi36shi5s'), '9'
 print struct.unpack_from('<i', bs, struct.calcsize('<2Bhi36shi5sb')), struct.calcsize('<2Bhi36shi5sb'), '10'
-print struct.unpack_from('<26s', bs, struct.calcsize('<2Bhi36shi5sbi')),struct.calcsize('<2Bhi36shi5sbi'), '11'
+print struct.unpack_from('<26s', bs, struct.calcsize('<2Bhi36shi5sbi')), struct.calcsize('<2Bhi36shi5sbi'), '11'
 
 print struct.unpack_from('<h', bs, struct.calcsize('<2Bhi36shi5sbi26s')), '12'
 print struct.unpack_from('<i', bs, struct.calcsize('<2Bhi36shi5sbi26sh')), '13'
 print struct.unpack_from('<6s', bs, struct.calcsize('<2Bhi36shi5sbi26shi')), '14'
-print struct.unpack_from('<b', bs, struct.calcsize('<2Bhi36shi5sbi26shi6s')), struct.calcsize('<2Bhi36shi5sbi26shi6s'), '15'
-print struct.unpack_from('<q', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sb')), struct.calcsize('<2Bhi36shi5sbi26shi6sb'), '16'
+print struct.unpack_from('<b', bs, struct.calcsize('<2Bhi36shi5sbi26shi6s')), struct.calcsize(
+    '<2Bhi36shi5sbi26shi6s'), '15'
+print struct.unpack_from('<q', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sb')), struct.calcsize(
+    '<2Bhi36shi5sbi26shi6sb'), '16'
 
 print struct.unpack_from('<H', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sbq')), '17'
 print struct.unpack_from('<i', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sbqH')), '18'
@@ -46,9 +47,8 @@ print struct.unpack_from('<6s', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sbqHi')
 print struct.unpack_from('<B', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sbqHi6s')), '19'
 print struct.unpack_from('<B', bs, struct.calcsize('<2Bhi36shi5sbi26shi6sbqHi6sB')), '20'
 
-from taobaowspy.message import _MessageIO
+from taobaotmcpy.messageio import reader
 
-io = _MessageIO()
-message = io.read(bs)
+message = reader(bs)
 
 print message.content
