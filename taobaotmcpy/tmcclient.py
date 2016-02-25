@@ -22,7 +22,7 @@ class TmcClient(WebSocket, Event):
         super(TmcClient, self).__init__(url, *args, **kwargs)
         Event.__init__(self)
 
-        logger.info('[%s:%s]WebSocket Start Connect.' % (url, group_name))
+        self.on('on_init', lambda: logger.info('WebSocket Start Connect: %s@%s' % (url, group_name)))
 
         assert isinstance(url, (str, unicode)) and len(url) > 0
         assert isinstance(app_key, (str, unicode)) and len(app_key) > 0
@@ -61,7 +61,7 @@ class TmcClient(WebSocket, Event):
 
     def on_open(self):
         timestamp = int(round(time.time() * 1000))
-        logger.info('[%s:%s]TMC Handshake Start.' % (self.url, self.group_name))
+        logger.info('TMC Handshake Start.')
 
         params = {
             'timestamp': str(timestamp),
@@ -84,59 +84,62 @@ class TmcClient(WebSocket, Event):
         try:
             message = reader(data)
         except:
-            logging.error('[%s:%s]Message Parse Error.' % (self.url, self.group_name))
+            logging.error('[%s]Message Parse Error.' % self.group_name)
             self.fire('parse_message_error')
             raise
 
         self.fire('received_message')
-        logger.debug('[%s:%s]Received Message %s' % (self.url, self.group_name, message))
+        logger.debug('[%s]Received Message %s' % (self.group_name, message))
 
         if message.message_type == 1:  # 发送连接数据返回
             self.token = message.token
-            logger.info('[%s:%s]TMC Handshake Success. The Token Is %s'
-                        % (self.url, self.group_name, message.token))
-            self.fire('on_handshake_success', token=self.token)
+            if self.token:
+                logger.info('[%s]TMC Handshake Success. The Token Is %s' % (self.group_name, message.token))
+                self.fire('on_handshake_success', token=self.token)
+            else:
+                logging.info('[%s]TMS Handshake Failed, Token Is Empty, Error: %s' % (self.group_name, message))
+
         elif message.message_type == 2:  # 服务器主动通知消息
             self.fire('on_confirm_message', message_id=message.content.get('id'))
             self.fire('on_message', message=message)
         elif message.message_type == 3:  # 主动拉取消息返回
-            pass
+            print data
 
     def on_ping(self):
-        logger.debug('[%s:%s]Received Ping.' % (self.url, self.group_name))
+        logger.debug('[%s]Received Ping.' % self.group_name)
         self.fire('on_ping')
 
     def on_pong(self):
-        logger.debug('[%s:%s]Received Pong.' % (self.url, self.group_name))
+        logger.debug('[%s]Received Pong.' % self.group_name)
         self.fire('on_pong')
 
     def on_close(self):
-        logger.error('[%s:%s]TMC Connection Close Error.' % (self.url, self.group_name))
+        logger.error('[%s]TMC Connection Close Error.' % self.group_name)
         self.fire('on_close')
 
     def on_unsupported(self):
         self.fire('on_abort')
-        logger.error('[%s:%s]Abort Error.' % (self.url, self.group_name))
+        logger.error('[%s]Abort Error.' % self.group_name)
 
     def _on_confirm_message(self, message_id):
         cm = confirm_message(message_id, self.token)
-        logger.debug('[%s"%s]Confirm Message: %s' % (self.url, self.group_name, message_id))
+        logger.debug('[%s]Confirm Message: %s' % (self.group_name, message_id))
         self.write_binary(cm)
 
-    def _start_query_loop(self, token=None):
+    def _start_query_loop(self):
         """ 开启主动拉取消息循环 """
 
-        def _query_message_loop(_self, url, group_name, _token):
+        def _query_message_loop(_self, group_name, _token):
             def _():
-                logger.debug('[%s:%s]Send Query Message Request.' % (url, group_name))
+                logger.debug('[%s]Send Query Message Request.' % group_name)
                 _self.write_binary(query_message(token=_token))
 
             return _
 
-        periodic = ioloop.PeriodicCallback(_query_message_loop(self, self.url, self.group_name, self.token),
+        periodic = ioloop.PeriodicCallback(_query_message_loop(self, self.group_name, self.token),
                                            self.query_message_interval * 1000, io_loop=self.io_loop)
 
-        logger.info('[%s:%s]Start Query Message Interval.' % (self.url, self.group_name))
+        logger.info('[%s]Start Query Message Interval.' % self.group_name)
 
         periodic.start()
 
