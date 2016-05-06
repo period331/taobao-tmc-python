@@ -17,7 +17,7 @@ if __name__ == '__main__':
                    query_message_interval=50)
 
     def print1():
-        print 'on_open'
+        print('on_open')
 
     ws.on("on_open", print1)
 
