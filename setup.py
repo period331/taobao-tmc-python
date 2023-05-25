@@ -41,7 +41,7 @@ finally:
       zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
-          'tornado==4.0'
+          'tornado==6.3.2'
       ],
       entry_points="""
       # -*- Entry points: -*-
